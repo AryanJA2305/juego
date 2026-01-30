@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Connect 4 - Tres en Raya</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff006e;
+            --neon-yellow: #ffbe0b;
+            --neon-orange: #ff6b35;
+            --neon-green: #06ffa5;
+            --deep-purple: #1a0933;
+            --dark-bg: #0a0118;
+            --grid-glow: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--deep-purple) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink), var(--neon-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            animation: glow 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 10px var(--neon-blue));
+            }
+
+            to {
+                filter: drop-shadow(0 0 25px var(--neon-pink));
+            }
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            color: var(--neon-yellow);
+            text-shadow: 0 0 10px var(--neon-yellow);
+            min-height: 2.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            padding: 2rem;
+            background: rgba(26, 9, 51, 0.6);
+            border-radius: 20px;
+            border: 3px solid var(--grid-glow);
+            box-shadow:
+                0 0 30px rgba(139, 92, 246, 0.4),
+                inset 0 0 30px rgba(139, 92, 246, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .cell-container {
+            position: relative;
+            aspect-ratio: 1;
+            background: rgba(10, 1, 24, 0.8);
+            border-radius: 15px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .cell-container:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            transform: scale(1.30);
+            z-index: 10;
+        }
+
+        .cell-container.won-blue {
+            background: radial-gradient(circle, rgba(0, 243, 255, 0.3) 0%, rgba(0, 243, 255, 0.1) 100%);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 30px var(--neon-blue);
+            animation: pulse-blue 1.5s ease-in-out infinite;
+        }
+
+        .cell-container.won-pink {
+            background: radial-gradient(circle, rgba(255, 0, 110, 0.3) 0%, rgba(255, 0, 110, 0.1) 100%);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 30px var(--neon-pink);
+            animation: pulse-pink 1.5s ease-in-out infinite;
+        }
+
+        .cell-container.won-orange {
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.3) 0%, rgba(255, 107, 53, 0.1) 100%);
+            border-color: var(--neon-orange);
+            box-shadow: 0 0 30px var(--neon-orange);
+            animation: pulse-orange 1.5s ease-in-out infinite;
+        }
+
+        .cell-container.won-green {
+            background: radial-gradient(circle, rgba(6, 255, 165, 0.3) 0%, rgba(6, 255, 165, 0.1) 100%);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 30px var(--neon-green);
+            animation: pulse-green 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-blue {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--neon-blue);
+            }
+
+            50% {
+                box-shadow: 0 0 50px var(--neon-blue);
+            }
+        }
+
+        @keyframes pulse-pink {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--neon-pink);
+            }
+
+            50% {
+                box-shadow: 0 0 50px var(--neon-pink);
+            }
+        }
+
+        @keyframes pulse-orange {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--neon-orange);
+            }
+
+            50% {
+                box-shadow: 0 0 50px var(--neon-orange);
+            }
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--neon-green);
+            }
+
+            50% {
+                box-shadow: 0 0 50px var(--neon-green);
+            }
+        }
+
+        .winner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 6rem;
+            font-weight: 900;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .winner-overlay.blue-win {
+            color: var(--neon-blue);
+            text-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .winner-overlay.pink-win {
+            color: var(--neon-pink);
+            text-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .winner-overlay.orange-win {
+            color: var(--neon-orange);
+            text-shadow: 0 0 20px var(--neon-orange);
+        }
+
+        .winner-overlay.green-win {
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .connect4-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0.2rem;
+            padding: 0.5rem;
+            height: 100%;
+            position: relative;
+        }
+
+        .connect4-cell {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(139, 92, 246, 0.4);
+            position: relative;
+        }
+
+        .connect4-cell:hover:not(.filled) {
+            background: rgba(139, 92, 246, 0.4);
+            transform: scale(1.1);
+            border-color: var(--grid-glow);
+        }
+
+        .connect4-cell.filled {
+            cursor: default;
+        }
+
+        .connect4-cell.blue {
+            background: radial-gradient(circle, var(--neon-blue) 0%, rgba(0, 243, 255, 0.6) 100%);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            animation: drop-in 0.3s ease-out;
+        }
+
+        .connect4-cell.pink {
+            background: radial-gradient(circle, var(--neon-pink) 0%, rgba(255, 0, 110, 0.6) 100%);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+            animation: drop-in 0.3s ease-out;
+        }
+
+        .connect4-cell.orange {
+            background: radial-gradient(circle, var(--neon-orange) 0%, rgba(255, 107, 53, 0.6) 100%);
+            border-color: var(--neon-orange);
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.6);
+            animation: drop-in 0.3s ease-out;
+        }
+
+        .connect4-cell.green {
+            background: radial-gradient(circle, var(--neon-green) 0%, rgba(6, 255, 165, 0.6) 100%);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(6, 255, 165, 0.6);
+            animation: drop-in 0.3s ease-out;
+        }
+
+        @keyframes drop-in {
+            from {
+                transform: translateY(-100px) scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .reset-btn {
+            display: block;
+            margin: 2rem auto 0;
+            padding: 1rem 3rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--deep-purple);
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .reset-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.8);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.98);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-weight: 600;
+        }
+
+        .legend-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+
+        .legend-circle.blue {
+            background: radial-gradient(circle, var(--neon-blue) 0%, rgba(0, 243, 255, 0.6) 100%);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+        }
+
+        .legend-circle.pink {
+            background: radial-gradient(circle, var(--neon-pink) 0%, rgba(255, 0, 110, 0.6) 100%);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+        }
+
+        .legend-circle.orange {
+            background: radial-gradient(circle, var(--neon-orange) 0%, rgba(255, 107, 53, 0.6) 100%);
+            border-color: var(--neon-orange);
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.6);
+        }
+
+        .legend-circle.green {
+            background: radial-gradient(circle, var(--neon-green) 0%, rgba(6, 255, 165, 0.6) 100%);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(6, 255, 165, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .main-grid {
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .status {
+                font-size: 1.3rem;
+            }
+
+            .winner-overlay {
+                font-size: 3rem;
+            }
+        }
+
+        .player-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 1, 24, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .player-selection.hidden {
+            display: none;
+        }
+
+        .player-selection h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .player-buttons {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .player-btn {
+            padding: 1.5rem 2.5rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            background: rgba(139, 92, 246, 0.3);
+            border: 3px solid var(--grid-glow);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            min-width: 150px;
+        }
+
+        .player-btn:hover {
+            transform: scale(1.1);
+            background: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 30px var(--grid-glow);
+        }
+
+        .player-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="player-selection" id="playerSelection">
+        <h2>¿Cuántos jugadores?</h2>
+        <div class="player-buttons">
+            <button class="player-btn" onclick="startGame(2)">2 Jugadores</button>
+            <button class="player-btn" onclick="startGame(3)">3 Jugadores</button>
+            <button class="player-btn" onclick="startGame(4)">4 Jugadores</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Ultimate Connect 4</h1>
+        <div class="status" id="status">Turno del Jugador Azul</div>
+
+        <div class="main-grid" id="mainGrid"></div>
+
+        <button class="reset-btn" onclick="resetGame()">Nueva Partida</button>
+
+        <div class="legend" id="legend">
+            <div class="legend-item">
+                <div class="legend-circle blue"></div>
+                <span>Jugador 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle pink"></div>
+                <span>Jugador 2</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUFVNw7RBLlBSyyzH5Xtrr0j9-ZFjQAl8",
+            authDomain: "connect4-37e84.firebaseapp.com",
+            databaseURL: "https://connect4-37e84-default-rtdb.firebaseio.com",
+            projectId: "connect4-37e84",
+            storageBucket: "connect4-37e84.firebasestorage.app",
+            messagingSenderId: "735351498853",
+            appId: "1:735351498853:web:ecfdea5b06729606e33e8c",
+            measurementId: "G-WZ4XC86ZJ1"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Estado del juego
+        let numPlayers = 2;
+        let players = ['blue', 'pink'];
+        let currentPlayerIndex = 0;
+        let currentPlayer = 'blue';
+        let mainBoard = Array(25).fill(null); // Ganadores de cada celda del tablero principal
+        let connect4Boards = Array(25).fill(null).map(() => Array(64).fill(null)); // 25 tableros de 8x8
+        let gameOver = false;
+
+        // Configuración de jugadores
+        const playerConfig = {
+            2: ['blue', 'pink'],
+            3: ['blue', 'pink', 'orange'],
+            4: ['blue', 'pink', 'orange', 'green']
+        };
+
+        const playerNames = {
+            'blue': 'Azul',
+            'pink': 'Rosa',
+            'orange': 'Naranja',
+            'green': 'Verde'
+        };
+
+        const playerSymbols = {
+            'blue': '○',
+            'pink': '●',
+            'orange': '◐',
+            'green': '◑'
+        };
+
+        // Iniciar juego con número de jugadores
+        function startGame(num) {
+            numPlayers = num;
+            players = playerConfig[num];
+            currentPlayerIndex = 0;
+            currentPlayer = players[0];
+
+            // Ocultar pantalla de selección
+            document.getElementById('playerSelection').classList.add('hidden');
+
+            // Actualizar leyenda
+            updateLegend();
+
+            // Inicializar tablero
+            initGame();
+        }
+
+        // Actualizar leyenda de jugadores
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-circle ${player}"></div>
+                    <span>Jugador ${index + 1}</span>
+                `;
+                legend.appendChild(item);
+            });
+        }
+
+        // Inicializar el juego
+        function initGame() {
+            const mainGrid = document.getElementById('mainGrid');
+            mainGrid.innerHTML = '';
+
+            for (let i = 0; i < 25; i++) {
+                const cellContainer = document.createElement('div');
+                cellContainer.className = 'cell-container';
+                cellContainer.dataset.index = i;
+
+                const connect4Grid = document.createElement('div');
+                connect4Grid.className = 'connect4-grid';
+
+                for (let j = 0; j < 64; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'connect4-cell';
+                    cell.dataset.boardIndex = i;
+                    cell.dataset.cellIndex = j;
+                    cell.onclick = () => handleCellClick(i, j);
+                    connect4Grid.appendChild(cell);
+                }
+
+                cellContainer.appendChild(connect4Grid);
+                mainGrid.appendChild(cellContainer);
+            }
+
+            updateStatus();
+        }
+
+        // Manejar click en una celda
+        function handleCellClick(boardIndex, cellIndex) {
+            if (gameOver) return;
+            if (mainBoard[boardIndex]) return; // Tablero ya ganado
+            if (connect4Boards[boardIndex][cellIndex]) return; // Celda ya ocupada
+
+            // Colocar ficha
+            connect4Boards[boardIndex][cellIndex] = currentPlayer;
+
+            // Actualizar visual
+            const cell = document.querySelector(`[data-board-index="${boardIndex}"][data-cell-index="${cellIndex}"]`);
+            cell.classList.add('filled', currentPlayer);
+
+            // Verificar si se ganó este tablero de Connect 4
+            if (checkConnect4Win(boardIndex)) {
+                mainBoard[boardIndex] = currentPlayer;
+                markBoardAsWon(boardIndex, currentPlayer);
+
+                // Verificar si se ganó el juego principal (3 en raya)
+                if (checkMainBoardWin()) {
+                    gameOver = true;
+                    updateStatus(`¡Jugador ${playerNames[currentPlayer]} ha ganado la partida!`);
+                    return;
+                }
+            }
+
+            // Cambiar turno al siguiente jugador
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            currentPlayer = players[currentPlayerIndex];
+            updateStatus();
+        }
+
+        // Verificar victoria en un tablero de Connect 4
+        function checkConnect4Win(boardIndex) {
+            const board = connect4Boards[boardIndex];
+            const player = currentPlayer;
+
+            // Convertir índice 1D a 2D (8x8 grid)
+            const getCell = (row, col) => {
+                if (row < 0 || row > 7 || col < 0 || col > 7) return null;
+                return board[row * 8 + col];
+            };
+
+            // Verificar horizontal
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col <= 4; col++) {
+                    if (getCell(row, col) === player &&
+                        getCell(row, col + 1) === player &&
+                        getCell(row, col + 2) === player &&
+                        getCell(row, col + 3) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar vertical
+            for (let col = 0; col < 8; col++) {
+                for (let row = 0; row <= 4; row++) {
+                    if (getCell(row, col) === player &&
+                        getCell(row + 1, col) === player &&
+                        getCell(row + 2, col) === player &&
+                        getCell(row + 3, col) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar diagonal (abajo-derecha)
+            for (let row = 0; row <= 4; row++) {
+                for (let col = 0; col <= 4; col++) {
+                    if (getCell(row, col) === player &&
+                        getCell(row + 1, col + 1) === player &&
+                        getCell(row + 2, col + 2) === player &&
+                        getCell(row + 3, col + 3) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar diagonal (abajo-izquierda)
+            for (let row = 0; row <= 4; row++) {
+                for (let col = 3; col < 8; col++) {
+                    if (getCell(row, col) === player &&
+                        getCell(row + 1, col - 1) === player &&
+                        getCell(row + 2, col - 2) === player &&
+                        getCell(row + 3, col - 3) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // Marcar tablero como ganado
+        function markBoardAsWon(boardIndex, player) {
+            const container = document.querySelector(`.cell-container[data-index="${boardIndex}"]`);
+            container.classList.add(`won-${player}`);
+
+            const overlay = document.createElement('div');
+            overlay.className = `winner-overlay ${player}-win`;
+            overlay.textContent = playerSymbols[player];
+            container.appendChild(overlay);
+        }
+
+        // Verificar victoria en el tablero principal (3 en raya en tablero 5x5)
+        function checkMainBoardWin() {
+            const player = currentPlayer;
+
+            // Convertir índice 1D a 2D (5x5 grid)
+            const getMainCell = (row, col) => {
+                if (row < 0 || row > 4 || col < 0 || col > 4) return null;
+                return mainBoard[row * 5 + col];
+            };
+
+            // Verificar horizontal (3 en raya)
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col <= 2; col++) {
+                    if (getMainCell(row, col) === player &&
+                        getMainCell(row, col + 1) === player &&
+                        getMainCell(row, col + 2) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar vertical (3 en raya)
+            for (let col = 0; col < 5; col++) {
+                for (let row = 0; row <= 2; row++) {
+                    if (getMainCell(row, col) === player &&
+                        getMainCell(row + 1, col) === player &&
+                        getMainCell(row + 2, col) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar diagonal (abajo-derecha) (3 en raya)
+            for (let row = 0; row <= 2; row++) {
+                for (let col = 0; col <= 2; col++) {
+                    if (getMainCell(row, col) === player &&
+                        getMainCell(row + 1, col + 1) === player &&
+                        getMainCell(row + 2, col + 2) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Verificar diagonal (abajo-izquierda) (3 en raya)
+            for (let row = 0; row <= 2; row++) {
+                for (let col = 2; col < 5; col++) {
+                    if (getMainCell(row, col) === player &&
+                        getMainCell(row + 1, col - 1) === player &&
+                        getMainCell(row + 2, col - 2) === player) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // Actualizar mensaje de estado
+        function updateStatus(message) {
+            const status = document.getElementById('status');
+            if (message) {
+                status.textContent = message;
+            } else {
+                status.textContent = `Turno del Jugador ${playerNames[currentPlayer]}`;
+            }
+        }
+
+        // Reiniciar juego
+        function resetGame() {
+            currentPlayerIndex = 0;
+            currentPlayer = players[0];
+            mainBoard = Array(25).fill(null);
+            connect4Boards = Array(25).fill(null).map(() => Array(64).fill(null));
+            gameOver = false;
+
+            // Mostrar pantalla de selección
+            document.getElementById('playerSelection').classList.remove('hidden');
+        }
+
+        // Iniciar el juego cuando cargue la página (no hacer nada hasta que se seleccionen jugadores)
+    </script>
+</body>
+
+</html>
